@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.2.0] - 2026-02-19
+
+### Added
+
+- Iterative review and revise loop to improve blog post quality — after the initial draft, a critic prompt identifies weaknesses in structure, depth, clarity, and engagement, then the post is rewritten to address the feedback
+- Optional `iterations` field on the `POST /api/generate` request body (defaults to 1 for backwards compatibility); each additional iteration adds one review/revise cycle
+- `chatCompletion` helper in `LlmService` to reduce duplication across generate, review, and revise calls
+
 ## [0.1.0] - 2026-02-19
 
 ### Added

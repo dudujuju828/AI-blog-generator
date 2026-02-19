@@ -6,9 +6,10 @@ A Spring Boot API that generates blog posts using OpenAI and commits them as MDX
 
 1. You send a `POST /api/generate` request with a topic
 2. The API calls OpenAI to generate a full blog post (title, description, tags, and markdown content)
-3. The post is formatted as an MDX file with frontmatter
-4. The MDX file is committed directly to your GitHub repository via the Contents API
-5. If your site has continuous deployment, the new post triggers a redeploy automatically
+3. If `iterations` > 1, the post goes through review/revise cycles — a critic prompt identifies weaknesses, then the post is rewritten to address them
+4. The post is formatted as an MDX file with frontmatter
+5. The MDX file is committed directly to your GitHub repository via the Contents API
+6. If your site has continuous deployment, the new post triggers a redeploy automatically
 
 ## Tech Stack
 
@@ -24,7 +25,8 @@ A Spring Boot API that generates blog posts using OpenAI and commits them as MDX
 src/main/java/com/maxthomarino/res/
 ├── ResApplication.java                  # Spring Boot entry point
 ├── controller/
-│   └── GenerateController.java          # POST /api/generate endpoint
+│   ├── GenerateController.java          # POST /api/generate endpoint
+│   └── GlobalExceptionHandler.java      # Global exception handling
 ├── dto/
 │   ├── GenerateRequest.java             # Request body record
 │   └── GenerateResponse.java            # Response body record
@@ -61,7 +63,7 @@ The server starts on `http://localhost:8080`.
 
 ## Quick Generate Script
 
-For a one-command workflow, use `generate-post.cmd`. Open it, set your topic on the `TOPIC` line, and run:
+For a one-command workflow, use `generate-post.cmd`. Open it, set your `TOPIC` and `ITERATIONS` (default 2), and run:
 
 ```bash
 ./generate-post.cmd
@@ -80,14 +82,15 @@ Generate a blog post and commit it to GitHub.
 ```bash
 curl -X POST http://localhost:8080/api/generate \
   -H "Content-Type: application/json" \
-  -d '{"topic": "Why Rust is great for CLI tools"}'
+  -d '{"topic": "Why Rust is great for CLI tools", "iterations": 2}'
 ```
 
 **Request body:**
 
 ```json
 {
-  "topic": "Why Rust is great for CLI tools"
+  "topic": "Why Rust is great for CLI tools",
+  "iterations": 2
 }
 ```
 
