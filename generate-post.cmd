@@ -4,13 +4,13 @@ setlocal
 @REM ============================================
 @REM  Set your blog post topic here:
 @REM ============================================
-set "TOPIC=The history of polymorphism"
+set "TOPIC=C++ Array VS Vector, when and why?"
 set "ITERATIONS=2"
 @REM ============================================
 
 echo.
 echo Starting server...
-start /B "" cmd /C "mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"" > nul 2>&1
+start /B "" mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local > nul 2>&1
 
 echo Waiting for server to be ready...
 :wait

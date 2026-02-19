@@ -2,6 +2,8 @@
 
 A Spring Boot API that generates blog posts using OpenAI and commits them as MDX files to a GitHub repository.
 
+[![Video walkthrough](https://img.youtube.com/vi/rRHNZlQwOkU/maxresdefault.jpg)](https://youtu.be/rRHNZlQwOkU)
+
 ## How It Works
 
 1. You send a `POST /api/generate` request with a topic
