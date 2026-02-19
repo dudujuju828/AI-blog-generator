@@ -76,6 +76,7 @@ if "%ERRORLEVEL%" NEQ "0" (
 "%JAVACMD%" ^
   %MAVEN_OPTS% ^
   %MAVEN_DEBUG_OPTS% ^
+  "-Dmaven.multiModuleProjectDirectory=%MAVEN_PROJECTBASEDIR%." ^
   -classpath "%WRAPPER_JAR%" ^
   org.apache.maven.wrapper.MavenWrapperMain ^
   %MAVEN_CONFIG% %*

@@ -44,20 +44,30 @@ src/main/java/com/maxthomarino/res/
 
 ## Setup & Running
 
-Set the required environment variables:
+Create `src/main/resources/application-local.properties` with your keys:
 
-```bash
-export OPENAI_API_KEY=sk-...
-export GITHUB_TOKEN=ghp_...
+```properties
+openai.api-key=sk-...
+github.token=ghp_...
 ```
 
 Run with the Maven wrapper:
 
 ```bash
-./mvnw spring-boot:run
+./mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
 ```
 
 The server starts on `http://localhost:8080`.
+
+## Quick Generate Script
+
+For a one-command workflow, use `generate-post.cmd`. Open it, set your topic on the `TOPIC` line, and run:
+
+```bash
+./generate-post.cmd
+```
+
+This starts the server, generates the blog post, commits it to GitHub, and shuts down the server automatically.
 
 ## API Usage
 
@@ -99,7 +109,7 @@ Properties in `src/main/resources/application.properties`:
 | Property | Default | Environment Variable | Description |
 |---|---|---|---|
 | `openai.api-key` | — | `OPENAI_API_KEY` | OpenAI API key |
-| `openai.model` | `gpt-4o` | — | OpenAI model to use |
+| `openai.model` | `gpt-5.2` | — | OpenAI model to use |
 | `github.token` | — | `GITHUB_TOKEN` | GitHub personal access token |
 | `github.repo` | `maxthomarino/portfolio_new` | — | Target `owner/repo` for commits |
 

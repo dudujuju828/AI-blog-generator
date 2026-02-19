@@ -42,7 +42,7 @@ public class GitHubService {
         );
 
         String responseBody = restClient.put()
-                .uri("/repos/{repo}/contents/{path}", repo, path)
+                .uri("/repos/" + repo + "/contents/" + path)
                 .body(requestBody)
                 .retrieve()
                 .body(String.class);
