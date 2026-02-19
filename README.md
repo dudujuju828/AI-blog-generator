@@ -1,0 +1,119 @@
+# AI Blog Generator
+
+A Spring Boot API that generates blog posts using OpenAI and commits them as MDX files to a GitHub repository.
+
+## How It Works
+
+1. You send a `POST /api/generate` request with a topic
+2. The API calls OpenAI to generate a full blog post (title, description, tags, and markdown content)
+3. The post is formatted as an MDX file with frontmatter
+4. The MDX file is committed directly to your GitHub repository via the Contents API
+5. If your site has continuous deployment, the new post triggers a redeploy automatically
+
+## Tech Stack
+
+- Java 24
+- Spring Boot 3.4.3
+- Spring Web (RestClient)
+- Maven
+- Java Records for DTOs and models
+
+## Project Structure
+
+```
+src/main/java/com/maxthomarino/res/
+├── ResApplication.java                  # Spring Boot entry point
+├── controller/
+│   └── GenerateController.java          # POST /api/generate endpoint
+├── dto/
+│   ├── GenerateRequest.java             # Request body record
+│   └── GenerateResponse.java            # Response body record
+├── model/
+│   └── BlogPost.java                    # Blog post record
+└── service/
+    ├── BlogGeneratorService.java        # Orchestrates LLM + GitHub
+    ├── LlmService.java                  # OpenAI chat completions client
+    └── GitHubService.java               # GitHub Contents API client
+```
+
+## Prerequisites
+
+- **Java 24**
+- **OpenAI API key**
+- **GitHub personal access token** with `contents:write` permission on the target repository
+
+## Setup & Running
+
+Set the required environment variables:
+
+```bash
+export OPENAI_API_KEY=sk-...
+export GITHUB_TOKEN=ghp_...
+```
+
+Run with the Maven wrapper:
+
+```bash
+./mvnw spring-boot:run
+```
+
+The server starts on `http://localhost:8080`.
+
+## API Usage
+
+### `POST /api/generate`
+
+Generate a blog post and commit it to GitHub.
+
+**Request:**
+
+```bash
+curl -X POST http://localhost:8080/api/generate \
+  -H "Content-Type: application/json" \
+  -d '{"topic": "Why Rust is great for CLI tools"}'
+```
+
+**Request body:**
+
+```json
+{
+  "topic": "Why Rust is great for CLI tools"
+}
+```
+
+**Response:**
+
+```json
+{
+  "slug": "why-rust-is-great-for-cli-tools",
+  "title": "Why Rust Is Great for CLI Tools",
+  "commitUrl": "https://github.com/user/repo/commit/abc123",
+  "message": "Blog post generated and committed"
+}
+```
+
+## Configuration
+
+Properties in `src/main/resources/application.properties`:
+
+| Property | Default | Environment Variable | Description |
+|---|---|---|---|
+| `openai.api-key` | — | `OPENAI_API_KEY` | OpenAI API key |
+| `openai.model` | `gpt-4o` | — | OpenAI model to use |
+| `github.token` | — | `GITHUB_TOKEN` | GitHub personal access token |
+| `github.repo` | `maxthomarino/portfolio_new` | — | Target `owner/repo` for commits |
+
+## MDX Output Format
+
+Each generated post is committed to `src/content/blog/{slug}.mdx` with this structure:
+
+```mdx
+---
+title: "Post Title"
+date: "2025-03-15"
+description: "A short description of the post"
+tags: ["Tag1", "Tag2", "Tag3"]
+---
+
+The markdown content of the blog post...
+```
