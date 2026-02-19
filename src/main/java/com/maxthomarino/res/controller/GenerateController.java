@@ -20,6 +20,7 @@ public class GenerateController {
 
     @PostMapping("/generate")
     public GenerateResponse generate(@RequestBody GenerateRequest request) {
-        return blogGeneratorService.generate(request.topic());
+        int iterations = request.iterations() != null ? request.iterations() : 1;
+        return blogGeneratorService.generate(request.topic(), iterations);
     }
 }
