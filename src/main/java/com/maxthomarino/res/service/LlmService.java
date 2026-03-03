@@ -82,7 +82,9 @@ public class LlmService {
                   "tags": ["Tag1", "Tag2", "Tag3"],
                   "content": "The full blog post content in markdown format. Use ## for subheadings. Do NOT include the title as an h1."
                 }
-                Do not wrap the JSON in markdown code fences. Return raw JSON only.""";
+                Do not wrap the JSON in markdown code fences. Return raw JSON only.
+                IMPORTANT: The output will be rendered as MDX. Do NOT use LaTeX math notation (\\(, \\), \\[, \\]). \
+                Instead, use inline code (`F = m * a`) for formulas and plain text for equations.""";
 
         if (withImages) {
             systemPrompt += imageInstruction(imageCount);
@@ -144,7 +146,9 @@ public class LlmService {
                   "tags": ["Tag1", "Tag2", "Tag3"],
                   "content": "The full blog post content in markdown format. Use ## for subheadings. Do NOT include the title as an h1."
                 }
-                Do not wrap the JSON in markdown code fences. Return raw JSON only.""";
+                Do not wrap the JSON in markdown code fences. Return raw JSON only.
+                IMPORTANT: The output will be rendered as MDX. Do NOT use LaTeX math notation (\\(, \\), \\[, \\]). \
+                Instead, use inline code (`F = m * a`) for formulas and plain text for equations.""";
 
         if (withImages) {
             systemPrompt += """

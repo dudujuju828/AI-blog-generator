@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 @REM ============================================
 @REM  Set your blog post topic here:
 @REM ============================================
-set "TOPIC=C++ Memory Layout: stack vs heap and how objects are stored"
+set "TOPIC=How a Basic Rigid Body Simulation Works: forces, properties, and stepping forward in time"
 set "ITERATIONS=2"
 set "IMAGES=true"
 set "IMAGE_COUNT=5"
