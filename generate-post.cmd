@@ -4,10 +4,11 @@ setlocal
 @REM ============================================
 @REM  Set your blog post topic here:
 @REM ============================================
-set "TOPIC=C++ Memory Layout: stack vs heap and how objects are stored"
+set "TOPIC=CRTP in C++: the curiously recurring template pattern and static polymorphism"
 set "ITERATIONS=2"
 set "IMAGES=true"
 set "IMAGE_COUNT=5"
+set "AUDIO=true"
 @REM ============================================
 
 @REM Load .env file
@@ -30,9 +31,10 @@ if %ERRORLEVEL% NEQ 0 goto wait
 echo Server is ready. Generating blog post...
 echo Topic: %TOPIC%
 echo Images: %IMAGES% (max %IMAGE_COUNT%)
+echo Audio: %AUDIO%
 echo.
 
-curl -s -X POST http://localhost:8080/api/generate -H "Content-Type: application/json" -d "{\"topic\": \"%TOPIC%\", \"iterations\": %ITERATIONS%, \"images\": %IMAGES%, \"imageCount\": %IMAGE_COUNT%}"
+curl -s -X POST http://localhost:8080/api/generate -H "Content-Type: application/json" -d "{\"topic\": \"%TOPIC%\", \"iterations\": %ITERATIONS%, \"images\": %IMAGES%, \"imageCount\": %IMAGE_COUNT%, \"audio\": %AUDIO%}"
 
 echo.
 echo.

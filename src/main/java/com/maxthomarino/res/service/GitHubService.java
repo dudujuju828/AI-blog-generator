@@ -37,7 +37,7 @@ public class GitHubService {
         return commitAll(post, Map.of());
     }
 
-    public String commitAll(BlogPost post, Map<String, byte[]> images) {
+    public String commitAll(BlogPost post, Map<String, byte[]> extraFiles) {
         try {
             String branch = "master";
             String headSha = getHeadSha(branch);
@@ -55,15 +55,15 @@ public class GitHubService {
                     "sha", mdxBlobSha
             ));
 
-            // Add image files
-            for (var entry : images.entrySet()) {
+            // Add extra files (images, audio, etc.) — keys are full repo-relative paths
+            for (var entry : extraFiles.entrySet()) {
                 String base64 = Base64.getEncoder().encodeToString(entry.getValue());
-                String imageBlobSha = createBlob(base64, "base64");
+                String blobSha = createBlob(base64, "base64");
                 treeEntries.add(Map.of(
-                        "path", "public/blog-images/" + entry.getKey(),
+                        "path", entry.getKey(),
                         "mode", "100644",
                         "type", "blob",
-                        "sha", imageBlobSha
+                        "sha", blobSha
                 ));
             }
 

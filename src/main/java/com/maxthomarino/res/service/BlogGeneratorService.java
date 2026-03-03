@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class BlogGeneratorService {
@@ -19,14 +21,17 @@ public class BlogGeneratorService {
     private final LlmService llmService;
     private final GitHubService gitHubService;
     private final ImageService imageService;
+    private final TtsService ttsService;
 
-    public BlogGeneratorService(LlmService llmService, GitHubService gitHubService, ImageService imageService) {
+    public BlogGeneratorService(LlmService llmService, GitHubService gitHubService,
+                                ImageService imageService, TtsService ttsService) {
         this.llmService = llmService;
         this.gitHubService = gitHubService;
         this.imageService = imageService;
+        this.ttsService = ttsService;
     }
 
-    public GenerateResponse generate(String topic, int iterations, boolean withImages, int imageCount) {
+    public GenerateResponse generate(String topic, int iterations, boolean withImages, int imageCount, boolean withAudio) {
         BlogPost post = llmService.generatePost(topic, withImages, imageCount);
         for (int i = 0; i < iterations - 1; i++) {
             String feedback = llmService.reviewPost(post);
@@ -34,22 +39,36 @@ public class BlogGeneratorService {
         }
 
         String content = post.content();
-        Map<String, byte[]> imageFiles = new LinkedHashMap<>();
+        Map<String, byte[]> extraFiles = new LinkedHashMap<>();
 
         if (withImages && !post.images().isEmpty()) {
-            content = processImages(post, content, imageFiles);
+            content = processImages(post, content, extraFiles);
         }
+
+        if (withAudio) {
+            try {
+                byte[] audioBytes = ttsService.generateAudio(content);
+                if (audioBytes != null) {
+                    extraFiles.put("public/blog-audio/" + post.slug() + ".mp3", audioBytes);
+                    content = "<BlogAudioPlayer src=\"/blog-audio/" + post.slug() + ".mp3\" />\n\n" + content;
+                }
+            } catch (Exception e) {
+                log.error("Audio generation failed, publishing without audio: {}", e.getMessage());
+            }
+        }
+
+        content = escapeMdxAngleBrackets(content);
 
         BlogPost finalPost = new BlogPost(
                 post.title(), post.date(), post.description(), post.tags(),
                 content, post.slug(), post.images()
         );
 
-        String commitUrl = gitHubService.commitAll(finalPost, imageFiles);
+        String commitUrl = gitHubService.commitAll(finalPost, extraFiles);
         return new GenerateResponse(finalPost.slug(), finalPost.title(), commitUrl, "Blog post generated and committed");
     }
 
-    private String processImages(BlogPost post, String content, Map<String, byte[]> imageFiles) {
+    private String processImages(BlogPost post, String content, Map<String, byte[]> extraFiles) {
         for (int i = 0; i < post.images().size(); i++) {
             ImagePlacement placement = post.images().get(i);
             try {
@@ -60,9 +79,10 @@ public class BlogGeneratorService {
                 if (base64 != null) {
                     byte[] imageData = Base64.getDecoder().decode(base64);
                     String fileName = post.slug() + "-image-" + (i + 1) + ".png";
-                    imageFiles.put(fileName, imageData);
+                    extraFiles.put("public/blog-images/" + fileName, imageData);
+                    String safeAlt = placement.alt().replace("<", "&lt;").replace(">", "&gt;");
                     content = content.replace(placement.placeholder(),
-                            "![" + placement.alt() + "](/blog-images/" + fileName + ")");
+                            "![" + safeAlt + "](/blog-images/" + fileName + ")");
                 } else {
                     content = content.replace(placement.placeholder(), "");
                 }
@@ -77,5 +97,41 @@ public class BlogGeneratorService {
             }
         }
         return content;
+    }
+
+    /**
+     * Escapes angle brackets in prose that MDX would misinterpret as JSX tags,
+     * while preserving code fences, inline code, and intentional HTML tags.
+     */
+    static String escapeMdxAngleBrackets(String content) {
+        // Pattern to match protected regions: code fences, inline code, HTML tags, and markdown images
+        Pattern protectedRegion = Pattern.compile(
+                "```[\\s\\S]*?```"            // code fences
+                + "|`[^`]+`"                   // inline code
+                + "|!\\[[^]]*\\]\\([^)]*\\)"   // markdown images ![...](...)
+                + "|</?(?:audio|source|img|br|hr|div|span|p|a|em|strong|ul|ol|li|table|tr|td|th|thead|tbody|blockquote|pre|code|h[1-6])[^>]*/?>" // known HTML tags
+        );
+
+        StringBuilder result = new StringBuilder();
+        Matcher matcher = protectedRegion.matcher(content);
+        int lastEnd = 0;
+
+        while (matcher.find()) {
+            // Escape angle brackets in the prose between protected regions
+            String prose = content.substring(lastEnd, matcher.start());
+            result.append(escapeAngleBracketsInProse(prose));
+            // Append protected region unchanged
+            result.append(matcher.group());
+            lastEnd = matcher.end();
+        }
+        // Handle remaining prose after last protected region
+        result.append(escapeAngleBracketsInProse(content.substring(lastEnd)));
+
+        return result.toString();
+    }
+
+    private static String escapeAngleBracketsInProse(String prose) {
+        // Escape <word> patterns that MDX would parse as JSX components (e.g. <Derived>, <int>, <T>)
+        return prose.replaceAll("<(\\w[^>]*)>", "&lt;$1&gt;");
     }
 }
