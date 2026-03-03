@@ -109,6 +109,7 @@ public class BlogGeneratorService {
                 "```[\\s\\S]*?```"            // code fences
                 + "|`[^`]+`"                   // inline code
                 + "|!\\[[^]]*\\]\\([^)]*\\)"   // markdown images ![...](...)
+                + "|</?[A-Z]\\w*[^>]*/?>\\s*"  // JSX components (uppercase first letter, e.g. <BlogAudioPlayer ... />)
                 + "|</?(?:audio|source|img|br|hr|div|span|p|a|em|strong|ul|ol|li|table|tr|td|th|thead|tbody|blockquote|pre|code|h[1-6])[^>]*/?>" // known HTML tags
         );
 

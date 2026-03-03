@@ -4,7 +4,7 @@ setlocal
 @REM ============================================
 @REM  Set your blog post topic here:
 @REM ============================================
-set "TOPIC=CRTP in C++: the curiously recurring template pattern and static polymorphism"
+set "TOPIC=C++ Memory Layout: stack vs heap and how objects are stored"
 set "ITERATIONS=2"
 set "IMAGES=true"
 set "IMAGE_COUNT=5"
