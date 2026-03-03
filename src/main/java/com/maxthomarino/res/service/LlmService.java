@@ -87,10 +87,13 @@ public class LlmService {
                 {
                   "title": "Post Title",
                   "description": "A short 1-2 sentence description",
-                  "tags": ["Tag1", "Tag2", "Tag3"],
+                  "tags": ["Tag1", "Tag2"],
                   "content": "The full blog post content in markdown format. Use ## for subheadings. Do NOT include the title as an h1."
                 }
                 Do not wrap the JSON in markdown code fences. Return raw JSON only.
+                Use 1-3 tags maximum. Choose ONLY from these existing tags: \
+                AI, C++, Design Patterns, Education, Engineering, Game Development, Math, Medicine, Physics, Rust, Security, Systems, Web. \
+                Pick the most relevant 1-3; do not invent new tags.
                 The output will be rendered as MDX with KaTeX support via remark-math. \
                 Use $...$ for inline math and $$...$$ for display math. \
                 Display math ($$) must start at column 0 (no leading whitespace), even inside list items.""";
@@ -152,10 +155,13 @@ public class LlmService {
                 {
                   "title": "Post Title",
                   "description": "A short 1-2 sentence description",
-                  "tags": ["Tag1", "Tag2", "Tag3"],
+                  "tags": ["Tag1", "Tag2"],
                   "content": "The full blog post content in markdown format. Use ## for subheadings. Do NOT include the title as an h1."
                 }
                 Do not wrap the JSON in markdown code fences. Return raw JSON only.
+                Use 1-3 tags maximum. Choose ONLY from these existing tags: \
+                AI, C++, Design Patterns, Education, Engineering, Game Development, Math, Medicine, Physics, Rust, Security, Systems, Web. \
+                Pick the most relevant 1-3; do not invent new tags.
                 The output will be rendered as MDX with KaTeX support via remark-math. \
                 Use $...$ for inline math and $$...$$ for display math. \
                 Display math ($$) must start at column 0 (no leading whitespace), even inside list items.""";
