@@ -83,8 +83,9 @@ public class LlmService {
                   "content": "The full blog post content in markdown format. Use ## for subheadings. Do NOT include the title as an h1."
                 }
                 Do not wrap the JSON in markdown code fences. Return raw JSON only.
-                The output will be rendered as MDX with KaTeX support. You may use LaTeX math notation \
-                (\\( \\) for inline, \\[ \\] for display) for formulas.""";
+                The output will be rendered as MDX with KaTeX support via remark-math. \
+                Use $...$ for inline math and $$...$$ for display math. \
+                Display math ($$) must start at column 0 (no leading whitespace), even inside list items.""";
 
         if (withImages) {
             systemPrompt += imageInstruction(imageCount);
@@ -147,8 +148,9 @@ public class LlmService {
                   "content": "The full blog post content in markdown format. Use ## for subheadings. Do NOT include the title as an h1."
                 }
                 Do not wrap the JSON in markdown code fences. Return raw JSON only.
-                The output will be rendered as MDX with KaTeX support. You may use LaTeX math notation \
-                (\\( \\) for inline, \\[ \\] for display) for formulas.""";
+                The output will be rendered as MDX with KaTeX support via remark-math. \
+                Use $...$ for inline math and $$...$$ for display math. \
+                Display math ($$) must start at column 0 (no leading whitespace), even inside list items.""";
 
         if (withImages) {
             systemPrompt += """
