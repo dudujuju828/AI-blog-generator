@@ -4,9 +4,18 @@ setlocal
 @REM ============================================
 @REM  Set your blog post topic here:
 @REM ============================================
-set "TOPIC=C++ Array VS Vector, when and why?"
+set "TOPIC=C++ Memory Layout: stack vs heap and how objects are stored"
 set "ITERATIONS=2"
+set "IMAGES=true"
+set "IMAGE_COUNT=5"
 @REM ============================================
+
+@REM Load .env file
+if exist "%~dp0.env" (
+    for /f "usebackq tokens=1,* delims==" %%a in ("%~dp0.env") do (
+        if not "%%a"=="" if not "%%b"=="" set "%%a=%%b"
+    )
+)
 
 echo.
 echo Starting server...
@@ -20,15 +29,16 @@ if %ERRORLEVEL% NEQ 0 goto wait
 
 echo Server is ready. Generating blog post...
 echo Topic: %TOPIC%
+echo Images: %IMAGES% (max %IMAGE_COUNT%)
 echo.
 
-curl -s -X POST http://localhost:8080/api/generate -H "Content-Type: application/json" -d "{\"topic\": \"%TOPIC%\", \"iterations\": %ITERATIONS%}"
+curl -s -X POST http://localhost:8080/api/generate -H "Content-Type: application/json" -d "{\"topic\": \"%TOPIC%\", \"iterations\": %ITERATIONS%, \"images\": %IMAGES%, \"imageCount\": %IMAGE_COUNT%}"
 
 echo.
 echo.
 echo Shutting down server...
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8080 ^| findstr LISTENING') do (
-    taskkill /PID %%a /F > nul 2>&1
+    taskkill /T /F /PID %%a > nul 2>&1
 )
 
 echo Done.
