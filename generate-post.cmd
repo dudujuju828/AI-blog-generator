@@ -6,6 +6,7 @@ setlocal
 @REM ============================================
 set "TOPIC=C++ Array VS Vector, when and why?"
 set "ITERATIONS=2"
+set "IMAGES=false"
 @REM ============================================
 
 echo.
@@ -20,9 +21,10 @@ if %ERRORLEVEL% NEQ 0 goto wait
 
 echo Server is ready. Generating blog post...
 echo Topic: %TOPIC%
+echo Images: %IMAGES%
 echo.
 
-curl -s -X POST http://localhost:8080/api/generate -H "Content-Type: application/json" -d "{\"topic\": \"%TOPIC%\", \"iterations\": %ITERATIONS%}"
+curl -s -X POST http://localhost:8080/api/generate -H "Content-Type: application/json" -d "{\"topic\": \"%TOPIC%\", \"iterations\": %ITERATIONS%, \"images\": %IMAGES%}"
 
 echo.
 echo.

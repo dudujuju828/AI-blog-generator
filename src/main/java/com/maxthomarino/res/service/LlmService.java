@@ -3,11 +3,13 @@ package com.maxthomarino.res.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.maxthomarino.res.model.BlogPost;
+import com.maxthomarino.res.model.ImagePlacement;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -54,7 +56,22 @@ public class LlmService {
         }
     }
 
-    public BlogPost generatePost(String topic) {
+    private static final String IMAGE_INSTRUCTION = """
+
+            Additionally, identify 1-3 places in the post where a simple diagram or illustration would help \
+            the reader understand the concept. For each, embed a placeholder on its own line in the content \
+            using the format {{IMAGE_1}}, {{IMAGE_2}}, etc.
+
+            Include an "images" array in your JSON with objects for each placeholder:
+            {
+              "placeholder": "{{IMAGE_1}}",
+              "prompt": "A description of the diagram to generate",
+              "alt": "Alt text for the image"
+            }
+
+            If no diagrams are appropriate, return an empty "images" array.""";
+
+    public BlogPost generatePost(String topic, boolean withImages) {
         String systemPrompt = """
                 You are a technical blog writer. Given a topic, write a blog post and return ONLY valid JSON with this structure:
                 {
@@ -64,6 +81,10 @@ public class LlmService {
                   "content": "The full blog post content in markdown format. Use ## for subheadings. Do NOT include the title as an h1."
                 }
                 Do not wrap the JSON in markdown code fences. Return raw JSON only.""";
+
+        if (withImages) {
+            systemPrompt += IMAGE_INSTRUCTION;
+        }
 
         String content = chatCompletion(systemPrompt, "Write a blog post about: " + topic);
 
@@ -78,8 +99,10 @@ public class LlmService {
                     .replaceAll("^-|-$", "");
             String date = LocalDate.now().toString();
 
-            List<String> tags = new java.util.ArrayList<>();
+            List<String> tags = new ArrayList<>();
             blog.path("tags").forEach(tag -> tags.add(tag.asText()));
+
+            List<ImagePlacement> images = parseImages(blog);
 
             return new BlogPost(
                     title,
@@ -87,7 +110,8 @@ public class LlmService {
                     blog.path("description").asText(),
                     tags,
                     blog.path("content").asText(),
-                    slug
+                    slug,
+                    images
             );
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse OpenAI response", e);
@@ -104,7 +128,7 @@ public class LlmService {
         return chatCompletion(systemPrompt, userMessage);
     }
 
-    public BlogPost revisePost(BlogPost post, String feedback) {
+    public BlogPost revisePost(BlogPost post, String feedback, boolean withImages) {
         String systemPrompt = """
                 You are a technical blog writer. You will receive a blog post and editorial feedback. \
                 Revise the post to address the feedback while preserving the original topic and intent. \
@@ -117,6 +141,14 @@ public class LlmService {
                 }
                 Do not wrap the JSON in markdown code fences. Return raw JSON only.""";
 
+        if (withImages) {
+            systemPrompt += """
+
+                    The post may contain image placeholders like {{IMAGE_1}}, {{IMAGE_2}}, etc. \
+                    Preserve these placeholders in the content at appropriate locations. \
+                    Also preserve the "images" array from the original post in your JSON output.""" + IMAGE_INSTRUCTION;
+        }
+
         String userMessage = "## Current Post\nTitle: " + post.title() + "\n\n" + post.content()
                 + "\n\n## Feedback\n" + feedback;
 
@@ -125,8 +157,10 @@ public class LlmService {
         try {
             JsonNode blog = objectMapper.readTree(content);
 
-            List<String> tags = new java.util.ArrayList<>();
+            List<String> tags = new ArrayList<>();
             blog.path("tags").forEach(tag -> tags.add(tag.asText()));
+
+            List<ImagePlacement> images = withImages ? parseImages(blog) : List.of();
 
             return new BlogPost(
                     blog.path("title").asText(),
@@ -134,10 +168,26 @@ public class LlmService {
                     blog.path("description").asText(),
                     tags,
                     blog.path("content").asText(),
-                    post.slug()
+                    post.slug(),
+                    images
             );
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse OpenAI response", e);
         }
+    }
+
+    private List<ImagePlacement> parseImages(JsonNode blog) {
+        List<ImagePlacement> images = new ArrayList<>();
+        JsonNode imagesNode = blog.path("images");
+        if (imagesNode.isArray()) {
+            for (JsonNode img : imagesNode) {
+                images.add(new ImagePlacement(
+                        img.path("placeholder").asText(),
+                        img.path("prompt").asText(),
+                        img.path("alt").asText()
+                ));
+            }
+        }
+        return images;
     }
 }

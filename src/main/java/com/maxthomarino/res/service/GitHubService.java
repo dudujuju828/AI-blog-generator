@@ -55,6 +55,29 @@ public class GitHubService {
         }
     }
 
+    public String commitImage(String slug, String imageName, byte[] imageData) {
+        String encoded = Base64.getEncoder().encodeToString(imageData);
+        String path = "public/blog-images/" + slug + "-" + imageName + ".png";
+
+        Map<String, Object> requestBody = Map.of(
+                "message", "Add blog image: " + slug + "-" + imageName,
+                "content", encoded
+        );
+
+        String responseBody = restClient.put()
+                .uri("/repos/" + repo + "/contents/" + path)
+                .body(requestBody)
+                .retrieve()
+                .body(String.class);
+
+        try {
+            objectMapper.readTree(responseBody);
+            return "/blog-images/" + slug + "-" + imageName + ".png";
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse GitHub response for image commit", e);
+        }
+    }
+
     private String buildMdx(BlogPost post) {
         String tagsFormatted = post.tags().stream()
                 .map(tag -> "\"" + tag + "\"")
