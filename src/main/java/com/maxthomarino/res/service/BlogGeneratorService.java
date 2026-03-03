@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,20 +23,26 @@ public class BlogGeneratorService {
     private final GitHubService gitHubService;
     private final ImageService imageService;
     private final TtsService ttsService;
+    private final ResourceService resourceService;
 
     public BlogGeneratorService(LlmService llmService, GitHubService gitHubService,
-                                ImageService imageService, TtsService ttsService) {
+                                ImageService imageService, TtsService ttsService,
+                                ResourceService resourceService) {
         this.llmService = llmService;
         this.gitHubService = gitHubService;
         this.imageService = imageService;
         this.ttsService = ttsService;
+        this.resourceService = resourceService;
     }
 
-    public GenerateResponse generate(String topic, int iterations, boolean withImages, int imageCount, boolean withAudio) {
-        BlogPost post = llmService.generatePost(topic, withImages, imageCount);
+    public GenerateResponse generate(String topic, int iterations, boolean withImages, int imageCount,
+                                      boolean withAudio, List<String> resources) {
+        List<String> resolvedResources = resourceService.resolveResources(resources);
+
+        BlogPost post = llmService.generatePost(topic, withImages, imageCount, resolvedResources);
         for (int i = 0; i < iterations - 1; i++) {
             String feedback = llmService.reviewPost(post);
-            post = llmService.revisePost(post, feedback, withImages, imageCount);
+            post = llmService.revisePost(post, feedback, withImages, imageCount, resolvedResources);
         }
 
         String content = post.content();
