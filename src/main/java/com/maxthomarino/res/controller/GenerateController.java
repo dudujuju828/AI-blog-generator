@@ -22,6 +22,7 @@ public class GenerateController {
     public GenerateResponse generate(@RequestBody GenerateRequest request) {
         int iterations = request.iterations() != null ? request.iterations() : 1;
         boolean images = request.images() != null && request.images();
-        return blogGeneratorService.generate(request.topic(), iterations, images);
+        int imageCount = request.imageCount() != null ? request.imageCount() : 5;
+        return blogGeneratorService.generate(request.topic(), iterations, images, imageCount);
     }
 }

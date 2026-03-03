@@ -56,22 +56,24 @@ public class LlmService {
         }
     }
 
-    private static final String IMAGE_INSTRUCTION = """
+    private static String imageInstruction(int imageCount) {
+        return """
 
-            Additionally, identify 1-3 places in the post where a simple diagram or illustration would help \
-            the reader understand the concept. For each, embed a placeholder on its own line in the content \
-            using the format {{IMAGE_1}}, {{IMAGE_2}}, etc.
+                Additionally, identify up to %d places in the post where a simple diagram or illustration would help \
+                the reader understand the concept. For each, embed a placeholder on its own line in the content \
+                using the format {{IMAGE_1}}, {{IMAGE_2}}, etc.
 
-            Include an "images" array in your JSON with objects for each placeholder:
-            {
-              "placeholder": "{{IMAGE_1}}",
-              "prompt": "A description of the diagram to generate",
-              "alt": "Alt text for the image"
-            }
+                Include an "images" array in your JSON with objects for each placeholder:
+                {
+                  "placeholder": "{{IMAGE_1}}",
+                  "prompt": "A description of the diagram to generate",
+                  "alt": "Alt text for the image"
+                }
 
-            If no diagrams are appropriate, return an empty "images" array.""";
+                If no diagrams are appropriate, return an empty "images" array.""".formatted(imageCount);
+    }
 
-    public BlogPost generatePost(String topic, boolean withImages) {
+    public BlogPost generatePost(String topic, boolean withImages, int imageCount) {
         String systemPrompt = """
                 You are a technical blog writer. Given a topic, write a blog post and return ONLY valid JSON with this structure:
                 {
@@ -83,7 +85,7 @@ public class LlmService {
                 Do not wrap the JSON in markdown code fences. Return raw JSON only.""";
 
         if (withImages) {
-            systemPrompt += IMAGE_INSTRUCTION;
+            systemPrompt += imageInstruction(imageCount);
         }
 
         String content = chatCompletion(systemPrompt, "Write a blog post about: " + topic);
@@ -128,7 +130,7 @@ public class LlmService {
         return chatCompletion(systemPrompt, userMessage);
     }
 
-    public BlogPost revisePost(BlogPost post, String feedback, boolean withImages) {
+    public BlogPost revisePost(BlogPost post, String feedback, boolean withImages, int imageCount) {
         String systemPrompt = """
                 You are a technical blog writer. You will receive a blog post and editorial feedback. \
                 Revise the post to address the feedback while preserving the original topic and intent. \
@@ -146,7 +148,7 @@ public class LlmService {
 
                     The post may contain image placeholders like {{IMAGE_1}}, {{IMAGE_2}}, etc. \
                     Preserve these placeholders in the content at appropriate locations. \
-                    Also preserve the "images" array from the original post in your JSON output.""" + IMAGE_INSTRUCTION;
+                    Also preserve the "images" array from the original post in your JSON output.""" + imageInstruction(imageCount);
         }
 
         String userMessage = "## Current Post\nTitle: " + post.title() + "\n\n" + post.content()

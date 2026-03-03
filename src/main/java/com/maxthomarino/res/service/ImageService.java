@@ -26,7 +26,7 @@ public class ImageService {
     private final String apiKey;
 
     public ImageService(@Value("${gemini.api-key:}") String apiKey,
-                        @Value("${gemini.model:gemini-2.0-flash-exp}") String model,
+                        @Value("${gemini.model:gemini-2.5-flash-image}") String model,
                         ObjectMapper objectMapper) {
         this.apiKey = apiKey;
         this.model = model;

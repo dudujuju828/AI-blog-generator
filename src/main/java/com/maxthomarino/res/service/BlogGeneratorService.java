@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Service
 public class BlogGeneratorService {
@@ -24,16 +26,18 @@ public class BlogGeneratorService {
         this.imageService = imageService;
     }
 
-    public GenerateResponse generate(String topic, int iterations, boolean withImages) {
-        BlogPost post = llmService.generatePost(topic, withImages);
+    public GenerateResponse generate(String topic, int iterations, boolean withImages, int imageCount) {
+        BlogPost post = llmService.generatePost(topic, withImages, imageCount);
         for (int i = 0; i < iterations - 1; i++) {
             String feedback = llmService.reviewPost(post);
-            post = llmService.revisePost(post, feedback, withImages);
+            post = llmService.revisePost(post, feedback, withImages, imageCount);
         }
 
         String content = post.content();
+        Map<String, byte[]> imageFiles = new LinkedHashMap<>();
+
         if (withImages && !post.images().isEmpty()) {
-            content = processImages(post, content);
+            content = processImages(post, content, imageFiles);
         }
 
         BlogPost finalPost = new BlogPost(
@@ -41,24 +45,32 @@ public class BlogGeneratorService {
                 content, post.slug(), post.images()
         );
 
-        String commitUrl = gitHubService.commitPost(finalPost);
+        String commitUrl = gitHubService.commitAll(finalPost, imageFiles);
         return new GenerateResponse(finalPost.slug(), finalPost.title(), commitUrl, "Blog post generated and committed");
     }
 
-    private String processImages(BlogPost post, String content) {
+    private String processImages(BlogPost post, String content, Map<String, byte[]> imageFiles) {
         for (int i = 0; i < post.images().size(); i++) {
             ImagePlacement placement = post.images().get(i);
             try {
+                if (i > 0) {
+                    Thread.sleep(10_000);
+                }
                 String base64 = imageService.generateImage(placement.prompt());
                 if (base64 != null) {
                     byte[] imageData = Base64.getDecoder().decode(base64);
-                    String imageName = "image-" + (i + 1);
-                    String imagePath = gitHubService.commitImage(post.slug(), imageName, imageData);
+                    String fileName = post.slug() + "-image-" + (i + 1) + ".png";
+                    imageFiles.put(fileName, imageData);
                     content = content.replace(placement.placeholder(),
-                            "![" + placement.alt() + "](" + imagePath + ")");
+                            "![" + placement.alt() + "](/blog-images/" + fileName + ")");
                 } else {
                     content = content.replace(placement.placeholder(), "");
                 }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.error("Image processing interrupted at {}", placement.placeholder());
+                content = content.replace(placement.placeholder(), "");
+                break;
             } catch (Exception e) {
                 log.error("Failed to process image {}: {}", placement.placeholder(), e.getMessage());
                 content = content.replace(placement.placeholder(), "");
