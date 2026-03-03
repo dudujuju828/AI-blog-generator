@@ -83,8 +83,8 @@ public class LlmService {
                   "content": "The full blog post content in markdown format. Use ## for subheadings. Do NOT include the title as an h1."
                 }
                 Do not wrap the JSON in markdown code fences. Return raw JSON only.
-                IMPORTANT: The output will be rendered as MDX. Do NOT use LaTeX math notation (\\(, \\), \\[, \\]). \
-                Instead, use inline code (`F = m * a`) for formulas and plain text for equations.""";
+                The output will be rendered as MDX with KaTeX support. You may use LaTeX math notation \
+                (\\( \\) for inline, \\[ \\] for display) for formulas.""";
 
         if (withImages) {
             systemPrompt += imageInstruction(imageCount);
@@ -147,8 +147,8 @@ public class LlmService {
                   "content": "The full blog post content in markdown format. Use ## for subheadings. Do NOT include the title as an h1."
                 }
                 Do not wrap the JSON in markdown code fences. Return raw JSON only.
-                IMPORTANT: The output will be rendered as MDX. Do NOT use LaTeX math notation (\\(, \\), \\[, \\]). \
-                Instead, use inline code (`F = m * a`) for formulas and plain text for equations.""";
+                The output will be rendered as MDX with KaTeX support. You may use LaTeX math notation \
+                (\\( \\) for inline, \\[ \\] for display) for formulas.""";
 
         if (withImages) {
             systemPrompt += """
