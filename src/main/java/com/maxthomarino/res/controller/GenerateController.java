@@ -24,6 +24,7 @@ public class GenerateController {
         boolean images = request.images() != null && request.images();
         int imageCount = request.imageCount() != null ? request.imageCount() : 5;
         boolean audio = request.audio() != null && request.audio();
-        return blogGeneratorService.generate(request.topic(), iterations, images, imageCount, audio);
+        var resources = request.resources() != null ? request.resources() : java.util.List.<String>of();
+        return blogGeneratorService.generate(request.topic(), iterations, images, imageCount, audio, resources);
     }
 }

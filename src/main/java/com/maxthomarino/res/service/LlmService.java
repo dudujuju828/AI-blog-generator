@@ -73,7 +73,7 @@ public class LlmService {
                 If no diagrams are appropriate, return an empty "images" array.""".formatted(imageCount);
     }
 
-    public BlogPost generatePost(String topic, boolean withImages, int imageCount) {
+    public BlogPost generatePost(String topic, boolean withImages, int imageCount, List<String> resolvedResources) {
         String systemPrompt = """
                 You are a technical blog writer. Given a topic, write a blog post and return ONLY valid JSON with this structure:
                 {
@@ -82,11 +82,16 @@ public class LlmService {
                   "tags": ["Tag1", "Tag2", "Tag3"],
                   "content": "The full blog post content in markdown format. Use ## for subheadings. Do NOT include the title as an h1."
                 }
-                Do not wrap the JSON in markdown code fences. Return raw JSON only.""";
+                Do not wrap the JSON in markdown code fences. Return raw JSON only.
+                The output will be rendered as MDX with KaTeX support via remark-math. \
+                Use $...$ for inline math and $$...$$ for display math. \
+                Display math ($$) must start at column 0 (no leading whitespace), even inside list items.""";
 
         if (withImages) {
             systemPrompt += imageInstruction(imageCount);
         }
+
+        systemPrompt += resourceBlock(resolvedResources);
 
         String content = chatCompletion(systemPrompt, "Write a blog post about: " + topic);
 
@@ -130,7 +135,8 @@ public class LlmService {
         return chatCompletion(systemPrompt, userMessage);
     }
 
-    public BlogPost revisePost(BlogPost post, String feedback, boolean withImages, int imageCount) {
+    public BlogPost revisePost(BlogPost post, String feedback, boolean withImages, int imageCount,
+                               List<String> resolvedResources) {
         String systemPrompt = """
                 You are a technical blog writer. You will receive a blog post and editorial feedback. \
                 Revise the post to address the feedback while preserving the original topic and intent. \
@@ -141,7 +147,10 @@ public class LlmService {
                   "tags": ["Tag1", "Tag2", "Tag3"],
                   "content": "The full blog post content in markdown format. Use ## for subheadings. Do NOT include the title as an h1."
                 }
-                Do not wrap the JSON in markdown code fences. Return raw JSON only.""";
+                Do not wrap the JSON in markdown code fences. Return raw JSON only.
+                The output will be rendered as MDX with KaTeX support via remark-math. \
+                Use $...$ for inline math and $$...$$ for display math. \
+                Display math ($$) must start at column 0 (no leading whitespace), even inside list items.""";
 
         if (withImages) {
             systemPrompt += """
@@ -150,6 +159,8 @@ public class LlmService {
                     Preserve these placeholders in the content at appropriate locations. \
                     Also preserve the "images" array from the original post in your JSON output.""" + imageInstruction(imageCount);
         }
+
+        systemPrompt += resourceBlock(resolvedResources);
 
         String userMessage = "## Current Post\nTitle: " + post.title() + "\n\n" + post.content()
                 + "\n\n## Feedback\n" + feedback;
@@ -176,6 +187,19 @@ public class LlmService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse OpenAI response", e);
         }
+    }
+
+    private static String resourceBlock(List<String> resolvedResources) {
+        if (resolvedResources == null || resolvedResources.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n\nYou may reference the following resources if relevant (do not fabricate citations):");
+        for (String resource : resolvedResources) {
+            sb.append("\n---\n").append(resource);
+        }
+        sb.append("\n---");
+        return sb.toString();
     }
 
     private List<ImagePlacement> parseImages(JsonNode blog) {
