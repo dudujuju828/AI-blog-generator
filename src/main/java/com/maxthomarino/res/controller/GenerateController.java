@@ -23,6 +23,7 @@ public class GenerateController {
         int iterations = request.iterations() != null ? request.iterations() : 1;
         boolean images = request.images() != null && request.images();
         int imageCount = request.imageCount() != null ? request.imageCount() : 5;
-        return blogGeneratorService.generate(request.topic(), iterations, images, imageCount);
+        boolean audio = request.audio() != null && request.audio();
+        return blogGeneratorService.generate(request.topic(), iterations, images, imageCount, audio);
     }
 }
