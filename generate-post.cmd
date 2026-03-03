@@ -4,10 +4,10 @@ setlocal enabledelayedexpansion
 @REM ============================================
 @REM  Set your blog post topic here:
 @REM ============================================
-set "TOPIC=Collision Detection Approaches: how to detect whether two objects overlap in 3D"
+set "TOPIC=Leukocytes: what they are, how they work, and their importance in pharmacy"
 set "ITERATIONS=2"
 set "IMAGES=true"
-set "IMAGE_COUNT=5"
+set "IMAGE_COUNT=7"
 set "AUDIO=true"
 @REM Optional: path to a file with one resource URL or snippet per line
 set "RESOURCES_FILE="

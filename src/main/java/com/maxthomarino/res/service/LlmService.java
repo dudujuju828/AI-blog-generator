@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.maxthomarino.res.model.BlogPost;
 import com.maxthomarino.res.model.ImagePlacement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -15,6 +17,8 @@ import java.util.Map;
 
 @Service
 public class LlmService {
+
+    private static final Logger log = LoggerFactory.getLogger(LlmService.class);
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
@@ -33,13 +37,17 @@ public class LlmService {
     }
 
     private String chatCompletion(String systemPrompt, String userMessage) {
+        return chatCompletion(systemPrompt, userMessage, 0.7);
+    }
+
+    private String chatCompletion(String systemPrompt, String userMessage, double temperature) {
         Map<String, Object> requestBody = Map.of(
                 "model", model,
                 "messages", List.of(
                         Map.of("role", "system", "content", systemPrompt),
                         Map.of("role", "user", "content", userMessage)
                 ),
-                "temperature", 0.7
+                "temperature", temperature
         );
 
         String responseBody = restClient.post()
@@ -215,5 +223,61 @@ public class LlmService {
             }
         }
         return images;
+    }
+
+    /**
+     * Generates a 30-question multiple-choice quiz based on the blog post content.
+     * Returns the raw JSON string on success, or null if generation/validation fails.
+     */
+    public String generateQuizJson(BlogPost post) {
+        String systemPrompt = """
+                You are a quiz generator. Given a blog post, create exactly 30 multiple-choice questions \
+                that test the reader's understanding of the key concepts covered in the post. \
+                Each question must have exactly 4 options with one correct answer.
+
+                Return ONLY a valid JSON array (no markdown fences, no wrapper object) with this structure:
+                [
+                  {
+                    "question": "What is ...?",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "answer": 0
+                  }
+                ]
+                Where "answer" is the zero-based index (0-3) of the correct option. \
+                Do not wrap the JSON in markdown code fences. Return raw JSON only.""";
+
+        String userMessage = "Title: " + post.title() + "\n\n" + post.content();
+
+        try {
+            String response = chatCompletion(systemPrompt, userMessage, 0.4);
+            JsonNode quiz = objectMapper.readTree(response);
+
+            if (!quiz.isArray() || quiz.size() != 30) {
+                log.warn("Quiz validation failed: expected array of 30, got {}", quiz.size());
+                return null;
+            }
+
+            for (JsonNode q : quiz) {
+                if (!q.has("question") || !q.has("options") || !q.has("answer")) {
+                    log.warn("Quiz validation failed: missing required fields");
+                    return null;
+                }
+                JsonNode options = q.path("options");
+                if (!options.isArray() || options.size() != 4) {
+                    log.warn("Quiz validation failed: expected 4 options");
+                    return null;
+                }
+                int answer = q.path("answer").asInt(-1);
+                if (answer < 0 || answer > 3) {
+                    log.warn("Quiz validation failed: answer index out of range");
+                    return null;
+                }
+            }
+
+            return response;
+        } catch (Exception e) {
+            log.error("Quiz generation failed: {}", e.getMessage());
+            return null;
+        }
     }
 }

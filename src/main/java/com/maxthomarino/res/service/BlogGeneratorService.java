@@ -64,6 +64,8 @@ public class BlogGeneratorService {
             }
         }
 
+        content = appendQuiz(content, post);
+
         content = escapeMdxSpecialChars(content);
 
         BlogPost finalPost = new BlogPost(
@@ -102,6 +104,19 @@ public class BlogGeneratorService {
                 log.error("Failed to process image {}: {}", placement.placeholder(), e.getMessage());
                 content = content.replace(placement.placeholder(), "");
             }
+        }
+        return content;
+    }
+
+    private String appendQuiz(String content, BlogPost post) {
+        try {
+            String quizJson = llmService.generateQuizJson(post);
+            if (quizJson != null) {
+                String encoded = Base64.getEncoder().encodeToString(quizJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                content = content + "\n\n<BlogQuiz data=\"" + encoded + "\" />\n";
+            }
+        } catch (Exception e) {
+            log.error("Quiz generation failed, publishing without quiz: {}", e.getMessage());
         }
         return content;
     }
