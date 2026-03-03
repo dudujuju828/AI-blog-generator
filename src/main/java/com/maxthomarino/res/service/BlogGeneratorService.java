@@ -64,7 +64,7 @@ public class BlogGeneratorService {
             }
         }
 
-        content = escapeMdxAngleBrackets(content);
+        content = escapeMdxSpecialChars(content);
 
         BlogPost finalPost = new BlogPost(
                 post.title(), post.date(), post.description(), post.tags(),
@@ -107,16 +107,17 @@ public class BlogGeneratorService {
     }
 
     /**
-     * Escapes angle brackets in prose that MDX would misinterpret as JSX tags,
-     * while preserving code fences, inline code, and intentional HTML/JSX tags.
+     * Escapes MDX-sensitive characters in prose while preserving code fences,
+     * inline code, math blocks, and intentional HTML/JSX tags.
      */
-    static String escapeMdxAngleBrackets(String content) {
-        // Pattern to match protected regions: code fences, inline code, HTML tags, and markdown images
+    static String escapeMdxSpecialChars(String content) {
         Pattern protectedRegion = Pattern.compile(
                 "```[\\s\\S]*?```"            // code fences
+                + "|\\$\\$[\\s\\S]*?\\$\\$"   // display math $$...$$
+                + "|\\$[^$\\n]+\\$"            // inline math $...$
                 + "|`[^`]+`"                   // inline code
                 + "|!\\[[^]]*\\]\\([^)]*\\)"   // markdown images ![...](...)
-                + "|</?[A-Z]\\w*[^>]*/?>\\s*"  // JSX components (uppercase first letter, e.g. <BlogAudioPlayer ... />)
+                + "|</?[A-Z]\\w*[^>]*/?>\\s*"  // JSX components
                 + "|</?(?:audio|source|img|br|hr|div|span|p|a|em|strong|ul|ol|li|table|tr|td|th|thead|tbody|blockquote|pre|code|h[1-6])[^>]*/?>" // known HTML tags
         );
 
@@ -126,19 +127,21 @@ public class BlogGeneratorService {
 
         while (matcher.find()) {
             String prose = content.substring(lastEnd, matcher.start());
-            result.append(escapeAngleBracketsInProse(prose));
+            result.append(escapeProseForMdx(prose));
             // Append protected region unchanged
             result.append(matcher.group());
             lastEnd = matcher.end();
         }
-        // Handle remaining prose after last protected region
-        result.append(escapeAngleBracketsInProse(content.substring(lastEnd)));
+        result.append(escapeProseForMdx(content.substring(lastEnd)));
 
         return result.toString();
     }
 
-    private static String escapeAngleBracketsInProse(String prose) {
+    private static String escapeProseForMdx(String prose) {
         // Escape <word> patterns that MDX would parse as JSX components (e.g. <Derived>, <int>, <T>)
-        return prose.replaceAll("<(\\w[^>]*)>", "&lt;$1&gt;");
+        String escaped = prose.replaceAll("<(\\w[^>]*)>", "&lt;$1&gt;");
+        // Escape curly braces that MDX would parse as JSX expressions
+        escaped = escaped.replace("{", "\\{").replace("}", "\\}");
+        return escaped;
     }
 }

@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 @REM ============================================
 @REM  Set your blog post topic here:
 @REM ============================================
-set "TOPIC=How a Basic Rigid Body Simulation Works: forces, properties, and stepping forward in time"
+set "TOPIC=Collision Detection Approaches: how to detect whether two objects overlap in 3D"
 set "ITERATIONS=2"
 set "IMAGES=true"
 set "IMAGE_COUNT=5"
