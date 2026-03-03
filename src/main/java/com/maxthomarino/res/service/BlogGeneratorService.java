@@ -138,8 +138,9 @@ public class BlogGeneratorService {
     }
 
     private static String escapeProseForMdx(String prose) {
-        // Escape <word> patterns that MDX would parse as JSX components (e.g. <Derived>, <int>, <T>)
-        String escaped = prose.replaceAll("<(\\w[^>]*)>", "&lt;$1&gt;");
+        // Escape all bare < that MDX would try to parse as JSX/HTML (e.g. <Derived>, <500, <T>)
+        // Protected regions (known HTML, JSX, images, math) are already excluded by the caller.
+        String escaped = prose.replace("<", "&lt;");
         // Escape curly braces that MDX would parse as JSX expressions
         escaped = escaped.replace("{", "\\{").replace("}", "\\}");
         return escaped;
