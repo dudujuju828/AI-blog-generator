@@ -66,6 +66,11 @@ public class TtsService {
         // Remove code fences
         text = text.replaceAll("```[\\s\\S]*?```", "");
 
+        // Remove display math $$...$$
+        text = text.replaceAll("\\$\\$[\\s\\S]*?\\$\\$", "");
+        // Remove inline math $...$
+        text = text.replaceAll("\\$[^$\\n]+\\$", "");
+
         // Remove inline code backticks
         text = text.replaceAll("`([^`]*)`", "$1");
 
